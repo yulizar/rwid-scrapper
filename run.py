@@ -54,24 +54,54 @@ def get_urls(page):
 
 
 
-def get_detail():
-    print('getting details....')
+def get_detail(url):
+    print('getting details....{}'.format(url))
+
+    res = session.get('http://127.0.0.1:5000'+url)
+    f = open('./res.html','w+')
+    f.write(res.text)
+    f.close()
+
+    soup = BeautifulSoup(res.text, 'html5lib')
+    title = soup.find('title').text.strip()
+    price = soup.find('h4', attrs={'class':'card-price'}).text
+    stock = soup.find('span', attrs={'class':'card-stock'}).text.strip().replace('stock: ','')
+    category = soup.find('span', attrs={'class':'card-category'}).text.strip().replace('category: ','')
+    description = soup.find('p', attrs={'class':'card-text'}).text.strip().replace('Description: ','')
+
+
+    dict_data = {
+        'title': title,
+        'price' : price,
+        'stock' : stock,
+        'category' : category,
+        'description' : description
+    }
+
+    # print(dict_data)
+    with open('./results/{}.json'.format(url.replace('/','')),'w') as outfile:
+        json.dump(dict_data,outfile)
 
 def create_csv():
     print('creating csv....')
 
 def run():
     total_pages = login()
-    total_urls = []
-    for i in range(total_pages):
-        urls = get_urls(i + 1)
-        total_urls += urls
 
-    with open('all_urls.json', 'w') as outfile:
-        json.dump(total_urls, outfile)
-    print(total_urls)
-    print(len(total_urls))
-    get_detail()
+    # total_urls = []
+    # for i in range(total_pages):
+    #     urls = get_urls(i + 1)
+    #     total_urls += urls
+    # with open('all_urls.json', 'w') as outfile:
+    #     json.dump(total_urls, outfile)
+
+    with open('all_urls.json') as json_file:
+        all_url = json.load(json_file)
+
+    for url in all_url:
+        get_detail(url)
+
+
     create_csv()
 
 if __name__ == '__main__':
